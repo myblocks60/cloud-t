@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // ─── Feature Flags ────────────────────────────────────────────────────────────
-const ENABLE_CONVERT = false;  // true → convert MKV to MP4 before upload
+const ENABLE_CONVERT = true;  // true → convert all media to MP4 before upload
 const ENABLE_RENAME = false;  // true → Base64-encode filename in Google Drive
 const FUZZY_RENAME = true;    // true → extract SxxExx and append with _
 const APPEND_STRING = "";     // add a custom string, append with _
@@ -135,11 +135,18 @@ client.add(magnetURI, { path: __dirname }, (torrent) => {
             console.log(`   Full path: ${absoluteFilePath}`);
             console.log(`   Extension: ${ext}`);
 
-            // Convert MKV to MP4 (changes file hash, keeps exact quality)
-            if (ENABLE_CONVERT && ext === '.mkv') {
-                convertedFilePath = absoluteFilePath.replace(/\.mkv$/i, '.mp4');
-                console.log(`🔄 Converting ${file.name} to MP4...`);
-                console.log(`   Output: ${convertedFilePath}`);
+            // Convert to MP4 (changes file hash, keeps exact quality via stream copy)
+            if (ENABLE_CONVERT) {
+                // Determine output path. If it's already .mp4, we use a temporary name to allow "compulsory" re-muxing.
+                const parsedPath = path.parse(absoluteFilePath);
+                if (ext === '.mp4') {
+                    convertedFilePath = path.join(parsedPath.dir, parsedPath.name + '.converted.mp4');
+                } else {
+                    convertedFilePath = path.join(parsedPath.dir, parsedPath.name + '.mp4');
+                }
+
+                console.log(`🔄 Compulsory conversion: ${file.name} to MP4...`);
+                console.log(`   Output: ${path.basename(convertedFilePath)}`);
 
                 try {
                     await convertToMp4(absoluteFilePath, convertedFilePath);
@@ -147,13 +154,11 @@ client.add(magnetURI, { path: __dirname }, (torrent) => {
                     uploadFilePath = convertedFilePath;
                 } catch (err) {
                     console.error(`❌ Conversion failed for ${file.name}: ${err.message}`);
-                    console.log(`⚠️ Uploading original MKV instead...`);
+                    console.log(`⚠️ Uploading original file instead...`);
                     convertedFilePath = null;
                 }
-            } else if (!ENABLE_CONVERT) {
-                console.log(`⏭️ Skipping conversion (ENABLE_CONVERT is false)`);
             } else {
-                console.log(`⏭️ Skipping conversion (not MKV)`);
+                console.log(`⏭️ Skipping conversion (ENABLE_CONVERT is false)`);
             }
 
             // Upload the file
