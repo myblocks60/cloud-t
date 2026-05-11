@@ -166,10 +166,9 @@ function downloadTorrent() {
             process.stdout.write(text);
 
             // Try to capture the torrent name from aria2 output
-            const nameMatch = text.match(/Download complete:\s*(.+)/);
+            const nameMatch = text.match(/Download complete:.*[\/\\]([^\/\\]+)[\/\\]/);
             if (nameMatch) {
-                const fullDownloadPath = nameMatch[1].trim();
-                torrentName = fullDownloadPath.split(/[\/\\]/).pop();
+                torrentName = nameMatch[1];
             }
         });
 
