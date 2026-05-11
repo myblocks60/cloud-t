@@ -166,9 +166,13 @@ function downloadTorrent() {
             process.stdout.write(text);
 
             // Try to capture the torrent name from aria2 output
-            const nameMatch = text.match(/Download complete:.*[\/\\]([^\/\\]+)[\/\\]/);
+            // Example: [NOTICE] Download complete: /path/to/downloaded_folder
+            const nameMatch = text.match(/Download complete:\s*(.*)/);
             if (nameMatch) {
-                torrentName = nameMatch[1];
+                const fullPath = nameMatch[1].trim();
+                // Use path.basename to get the folder or file name
+                torrentName = path.basename(fullPath);
+                console.log(`\n🔍 Detected download name: ${torrentName}`);
             }
         });
 
@@ -264,7 +268,7 @@ function discoverDownloadedFiles(torrentName, listedFiles = null, rStart = null,
     }
 
     if (torrentName) {
-        const torrentPath = path.join(__dirname, torrentName);
+        const torrentPath = path.isAbsolute(torrentName) ? torrentName : path.join(__dirname, torrentName);
         if (fs.existsSync(torrentPath)) {
             if (fs.statSync(torrentPath).isDirectory()) {
                 scanDir(torrentPath, __dirname);
@@ -285,6 +289,13 @@ function discoverDownloadedFiles(torrentName, listedFiles = null, rStart = null,
                 }
             }
         }
+    }
+
+    // Priority 3: Final fallback - if nothing found yet, scan the entire script directory
+    // This catches cases where torrentName extraction failed but files are there.
+    if (allEntries.length === 0) {
+        console.log('⚠️ Specific torrent folder not found. Scanning script directory for any media files...');
+        scanDir(__dirname, __dirname);
     }
 
     // Sort by name for consistent ordering
