@@ -1,6 +1,6 @@
 # Cloud Torrent to Google Drive Uploader
 
-A powerful Node.js tool to download torrents (via WebTorrent or aria2c), optionally convert MKV files to MP4, and upload them directly to a specific Google Drive folder with smart renaming options.
+A powerful Node.js tool to download torrents (via WebTorrent or aria2c), optionally convert media files to MP4, and upload them directly to a specific Google Drive folder with smart renaming options.
 
 ## 🚀 Features
 
@@ -10,7 +10,7 @@ A powerful Node.js tool to download torrents (via WebTorrent or aria2c), optiona
   - Fuzzy matching for Season/Episode (e.g., `S01E05`).
   - Custom string appending.
   - Optional random 5-digit suffix to avoid filename collisions.
-- **On-the-Fly Conversion**: Uses `ffmpeg` to convert `.mkv` to `.mp4` using stream copying (no quality loss, very fast).
+- **On-the-Fly Conversion**: Uses `ffmpeg` to convert any video format to `.mp4` using stream copying (no quality loss, very fast). This is compulsory for all formats when enabled.
 - **Partial Downloads**: Download specific files from a torrent by index or range.
 
 ---
@@ -20,7 +20,7 @@ A powerful Node.js tool to download torrents (via WebTorrent or aria2c), optiona
 Before running the script, ensure you have the following installed:
 
 1.  **Node.js** (v14 or higher)
-2.  **FFmpeg**: Required for MKV to MP4 conversion.
+2.  **FFmpeg**: Required for media conversion to MP4.
     - [Download FFmpeg](https://ffmpeg.org/download.html)
 3.  **aria2c** (Optional, but recommended for large torrents):
     - [Download aria2](https://aria2.github.io/)
@@ -85,7 +85,7 @@ You can tweak these constants at the top of `index.js` or `index-aria2.js`:
 
 | Flag | Description |
 | :--- | :--- |
-| `ENABLE_CONVERT` | If `true`, converts `.mkv` to `.mp4` before upload. |
+| `ENABLE_CONVERT` | If `true`, converts media files (e.g., `.mkv`, `.avi`, `.mp4`) to `.mp4` before upload. |
 | `ENABLE_RENAME` | If `true`, adds a 5-digit random number to the filename. |
 | `FUZZY_RENAME` | If `true`, extracts patterns like `S01E01` and prioritizes them. |
 | `APPEND_STRING` | A custom string to append to all uploaded filenames. |
