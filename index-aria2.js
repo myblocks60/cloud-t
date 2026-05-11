@@ -132,7 +132,7 @@ function downloadTorrent() {
             '--min-split-size=1M',
             '--file-allocation=none',
             '--continue=true',          // Resume if partially downloaded
-            '--allow-overwrite=true',
+            '--allow-overwrite=false',  // Prevent overwriting existing complete files
             '--auto-file-renaming=false',
             '--console-log-level=notice',
             '--summary-interval=5',     // Progress summary every 5 seconds
@@ -383,10 +383,28 @@ async function main() {
             }
         }
 
-        // Step 2: Download
-        const torrentName = await downloadTorrent();
+        // Step 2: Check if files already exist before downloading
+        let skipDownload = false;
+        let torrentName = null;
 
-        // Step 3: Discover files on disk
+        if (listedFiles && listedFiles.length > 0) {
+            const expectedFiles = listedFiles.filter(f =>
+                (rangeStart === null) || (f.idx >= rangeStart && f.idx <= rangeEnd)
+            );
+
+            const existingFiles = discoverDownloadedFiles(null, listedFiles, rangeStart, rangeEnd);
+
+            if (existingFiles.length > 0 && existingFiles.length === expectedFiles.length) {
+                console.log(`\n✨ All ${existingFiles.length} requested file(s) already exist on disk. Skipping download.`);
+                skipDownload = true;
+            }
+        }
+
+        if (!skipDownload) {
+            torrentName = await downloadTorrent();
+        }
+
+        // Step 3: Discover files on disk (final list for processing)
         let fileList = discoverDownloadedFiles(torrentName, listedFiles, rangeStart, rangeEnd);
 
         if (fileList.length === 0) {
