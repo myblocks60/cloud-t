@@ -19,6 +19,14 @@ console.log(`Script directory: ${__dirname}`);
 const magnetURI = 'magnet:?xt=urn:btih:f3b63f5d9d8c0d8d2f6e6f9b4b8d7e6c5a4b3c2d&dn=Big.Buck.Bunny.1080p.mkv';
 console.log(`Using magnet URI (truncated): ${magnetURI.substring(0, 80)}...`);
 
+function getNameFromMagnet(uri) {
+    const match = uri.match(/[?&]dn=([^&]+)/);
+    if (match) {
+        try { return decodeURIComponent(match[1].replace(/\+/g, ' ')); } catch { return null; }
+    }
+    return null;
+}
+
 // ─── Parse FILE_RANGE ─────────────────────────────────────────────────────────
 let rangeStart = null;
 let rangeEnd = null;
@@ -167,12 +175,24 @@ function downloadTorrent() {
 
             // Try to capture the torrent name from aria2 output
             // Example: [NOTICE] Download complete: /path/to/downloaded_folder
+            // Skip the metadata-only "MEMORY" name
             const nameMatch = text.match(/Download complete:\s*(.*)/);
             if (nameMatch) {
                 const fullPath = nameMatch[1].trim();
-                // Use path.basename to get the folder or file name
+                if (!fullPath.includes('[MEMORY][METADATA]')) {
+                    torrentName = path.basename(fullPath);
+                    console.log(`\n🔍 Detected download name: ${torrentName}`);
+                }
+            }
+
+            // Handle errorCode=13 (File already exists but no control file)
+            // This happens when resuming a complete file in a new session
+            const error13Match = text.match(/errorCode=13 File (.*) exists/);
+            if (error13Match) {
+                const fullPath = error13Match[1].trim();
                 torrentName = path.basename(fullPath);
-                console.log(`\n🔍 Detected download name: ${torrentName}`);
+                console.log(`\n✨ File/Folder already exists on disk: ${torrentName}`);
+                console.log(`   (aria2c prevented overwriting to keep your data safe)`);
             }
         });
 
@@ -402,6 +422,11 @@ async function main() {
 
         if (!skipDownload) {
             torrentName = await downloadTorrent();
+        }
+
+        // Final fallback: if we still don't have a name, try to extract from magnet URI
+        if (!torrentName) {
+            torrentName = getNameFromMagnet(magnetURI);
         }
 
         // Step 3: Discover files on disk (final list for processing)
