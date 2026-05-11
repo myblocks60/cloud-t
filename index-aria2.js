@@ -7,7 +7,7 @@ const ENABLE_CONVERT = true;  // true → convert all media to MP4 before upload
 const ENABLE_RENAME = true;  // true → Base64-encode filename in Google Drive
 const FUZZY_RENAME = true;    // true → extract SxxExx and append with _
 const APPEND_STRING = "bugsbunny";     // add a custom string, append with _
-const FILE_RANGE = " ";        // e.g. "1-6" → only files 1 to 6, "5-5" → only file 5, "" → all files
+const FILE_RANGE = "";        // e.g. "1-6" → only files 1 to 6, "5-5" → only file 5, "" → all files
 // ────────────────────────────────────────────────────────────────────────────
 
 console.log('Starting torrent download script (aria2 version)...');
